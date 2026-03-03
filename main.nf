@@ -3,9 +3,11 @@
 nextflow.enable.dsl = 2
 
 include { NORMALISE       } from './modules/normalise'
-include { MAP_GUIDES      } from './modules/map_guides'
+include { MAP_GUIDES as MAP_GUIDES_CELL    } from './modules/map_guides'
+include { MAP_GUIDES as MAP_GUIDES_PLASMID } from './modules/map_guides'
 include { BIN_BY_GENE     } from './modules/bin_by_gene'
-include { COUNT_KEYS      } from './modules/count_keys'
+include { COUNT_KEYS as COUNT_KEYS_CELL    } from './modules/count_keys'
+include { COUNT_KEYS as COUNT_KEYS_PLASMID } from './modules/count_keys'
 include { CALC_LFC        } from './modules/calc_lfc'
 
 workflow {
@@ -25,21 +27,27 @@ workflow {
     ch_norm_cell    = NORMALISE.out.normalised.filter { label, f -> label == "cell"    }
     ch_norm_plasmid = NORMALISE.out.normalised.filter { label, f -> label == "plasmid" }
 
-    // ── Step 2: Map keys → guide pair → gene pair (cell counts only) ──────────
-    MAP_GUIDES(
+    // ── Step 2: Map keys → guide pair → gene pair for both count sets ─────────
+    MAP_GUIDES_CELL(
         ch_norm_cell.map { _label, f -> f },
         ch_annotations
     )
 
+    MAP_GUIDES_PLASMID(
+        ch_norm_plasmid.map { _label, f -> f },
+        ch_annotations
+    )
+
     // ── Step 3: Count unique keys per guide pair / gene pair ──────────────────
-    COUNT_KEYS(MAP_GUIDES.out.mapped)
+    COUNT_KEYS_CELL(MAP_GUIDES_CELL.out.mapped)
+    COUNT_KEYS_PLASMID(MAP_GUIDES_PLASMID.out.mapped)
 
     // ── Step 4: Calculate LFC and emit enriched table ─────────────────────────
     //   Use mapped cell rows + normalised plasmid counts to compute per-key LFC
     ch_norm_plasmid_file = ch_norm_plasmid.map { _l, f -> f }
 
     CALC_LFC(
-        MAP_GUIDES.out.mapped,
+        MAP_GUIDES_CELL.out.mapped,
         ch_norm_plasmid_file
     )
 

@@ -6,16 +6,17 @@ A Nextflow pipeline for calculating log fold change (LFC) from dual-guide CRISPR
 
 ```
 cell_counts    ──┐
-                  ├──[NORMALISE]──[MAP_GUIDES]──[CALC_LFC]──[BIN_BY_GENE]  → per-gene-pair bin files
-plasmid_counts ──┘         │                └──[COUNT_KEYS]    → key_counts.txt
-                           └────────────────────────────────────→ used for LFC denominator
+                  ├──[NORMALISE]──[MAP_GUIDES (cell)]──[COUNT_KEYS (cell)]
+                  │                    └───────────────[CALC_LFC]──[BIN_BY_GENE]  → per-gene-pair bin files
+plasmid_counts ──┘
+                  └──[MAP_GUIDES (plasmid)]──[COUNT_KEYS (plasmid)]
 ```
 
 | Step | Process | Script | Output |
 |------|---------|--------|--------|
 | 1 | `NORMALISE` | `normalise.py` | `cell_normalised.txt`, `plasmid_normalised.txt` |
-| 2 | `MAP_GUIDES` | `map_guides.py` | `mapped_counts.txt` |
-| 3 | `COUNT_KEYS` | `count_keys.py` | `key_counts.txt` |
+| 2 | `MAP_GUIDES` | `map_guides.py` | `mapped_counts.txt` (cell and plasmid runs) |
+| 3 | `COUNT_KEYS` | `count_keys.py` | `key_counts.txt` (cell and plasmid runs) |
 | 4 | `CALC_LFC` | `calc_lfc.py` | `lfc.txt` |
 | 5 | `BIN_BY_GENE` | `bin_by_gene.py` | `bin_<gene1>~<gene2>.txt` (one per gene pair) |
 
@@ -56,9 +57,11 @@ nextflow run main.nf \
 |------|-------------|
 | `results/normalise/cell_normalised.txt` | Cell counts divided by total |
 | `results/normalise/plasmid_normalised.txt` | Plasmid counts divided by total |
-| `results/map_guides/mapped_counts.txt` | Keys enriched with guide/gene annotations |
+| `results/map_guides_cell/mapped_counts.txt` | Cell keys enriched with guide/gene annotations |
+| `results/map_guides_plasmid/mapped_counts.txt` | Plasmid keys enriched with guide/gene annotations |
 | `results/bin_by_gene/bin_<gene_pair>.txt` | Per-gene-pair LFC files for parallel analysis |
-| `results/count_keys/key_counts.txt` | Table of `gene_pair`, `guide_pair`, `n_ibars` |
+| `results/count_keys_cell/key_counts.txt` | Cell table of `gene_pair`, `guide_pair`, `n_ibars` |
+| `results/count_keys_plasmid/key_counts.txt` | Plasmid table of `gene_pair`, `guide_pair`, `n_ibars` |
 | `results/calc_lfc/lfc.txt` | `key`, `ibar`, `guide1_id`, `guide2_id`, `gene1`, `gene2`, `lfc` |
 
 ### LFC formula
