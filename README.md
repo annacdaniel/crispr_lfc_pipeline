@@ -5,19 +5,19 @@ A Nextflow pipeline for calculating log fold change (LFC) from dual-guide CRISPR
 ## Pipeline Overview
 
 ```
-cell_counts.txt ──┐
-                  ├──[NORMALISE]──[MAP_GUIDES]──[BIN_BY_GENE]  → per-gene-pair bin files
+cell_counts    ──┐
+                  ├──[NORMALISE]──[MAP_GUIDES]──[CALC_LFC]──[BIN_BY_GENE]  → per-gene-pair bin files
 plasmid_counts ──┘         │                └──[COUNT_KEYS]    → key_counts.txt
-                           └──────────────────[CALC_LFC]       → lfc.txt
+                           └────────────────────────────────────→ used for LFC denominator
 ```
 
 | Step | Process | Script | Output |
 |------|---------|--------|--------|
 | 1 | `NORMALISE` | `normalise.py` | `cell_normalised.txt`, `plasmid_normalised.txt` |
 | 2 | `MAP_GUIDES` | `map_guides.py` | `mapped_counts.txt` |
-| 3 | `BIN_BY_GENE` | `bin_by_gene.py` | `bin_<gene1>~<gene2>.txt` (one per gene pair) |
-| 4 | `COUNT_KEYS` | `count_keys.py` | `key_counts.txt` |
-| 5 | `CALC_LFC` | `calc_lfc.py` | `lfc.txt` |
+| 3 | `COUNT_KEYS` | `count_keys.py` | `key_counts.txt` |
+| 4 | `CALC_LFC` | `calc_lfc.py` | `lfc.txt` |
+| 5 | `BIN_BY_GENE` | `bin_by_gene.py` | `bin_<gene1>~<gene2>.txt` (one per gene pair) |
 
 ## Input File Formats
 
@@ -48,12 +48,6 @@ nextflow run main.nf \
     --plasmid_counts /path/to/plasmid_counts.txt \
     --annotations    /path/to/guide_annotations.txt \
     --outdir         results/
-
-# With conda
-nextflow run main.nf -profile conda
-
-# On SLURM
-nextflow run main.nf -profile slurm
 ```
 
 ## Output Files
@@ -63,15 +57,15 @@ nextflow run main.nf -profile slurm
 | `results/normalise/cell_normalised.txt` | Cell counts divided by total |
 | `results/normalise/plasmid_normalised.txt` | Plasmid counts divided by total |
 | `results/map_guides/mapped_counts.txt` | Keys enriched with guide/gene annotations |
-| `results/bin_by_gene/bin_<gene_pair>.txt` | Per-gene-pair count files for parallel analysis |
+| `results/bin_by_gene/bin_<gene_pair>.txt` | Per-gene-pair LFC files for parallel analysis |
 | `results/count_keys/key_counts.txt` | Table of `gene_pair`, `guide_pair`, `n_ibars` |
-| `results/calc_lfc/lfc.txt` | `key`, `cell_norm`, `plasmid_norm`, `lfc` |
+| `results/calc_lfc/lfc.txt` | `key`, `ibar`, `guide1_id`, `guide2_id`, `gene1`, `gene2`, `lfc` |
 
 ### LFC formula
 ```
 LFC = log2((cell_norm + pseudocount) / (plasmid_norm + pseudocount))
 ```
-Default pseudocount: `1e-8`. Keys present in cell but absent in plasmid are dropped.
+Default pseudocount: `1e-8`. iBARs present in cell but absent in plasmid are dropped.
 
 ## Quick Test
 

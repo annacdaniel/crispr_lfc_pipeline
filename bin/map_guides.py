@@ -5,7 +5,7 @@ Parse keys of the form {guide1_ID}_{iBAR}_{guide2_ID}, look up gene targets
 for each guide ID from the annotations file, and output an enriched TSV.
 
 Input counts format:  key<TAB>normalised_count
-Annotations format:   guide_id<TAB>gene   (header optional, detected automatically)
+Annotations format:   guide_sequence<TAB>guide_id<TAB>gene (no header, guide_sequence unused)
 
 Output columns: key, ibar, guide1_id, guide2_id, gene1, gene2, norm_count
 """
@@ -24,17 +24,17 @@ def parse_args():
 
 
 def load_annotations(path):
-    """Return dict: guide_id (str) -> gene (str)."""
+    """Return dict: guide_id (str) -> gene (str).
+    
+    Expected format: guide_sequence<TAB>guide_id<TAB>gene
+    """
     ann = {}
     with open(path) as fh:
         reader = csv.reader(fh, delimiter="\t")
         for row in reader:
-            if len(row) < 2:
+            if len(row) < 3:
                 continue
-            guide_id, gene = row[0].strip(), row[1].strip()
-            # Skip header-like rows
-            if guide_id.lower() in ("guide_id", "guide", "id"):
-                continue
+            guide_sequence, guide_id, gene = row[0].strip(), row[1].strip(), row[2].strip()
             ann[guide_id] = gene
     return ann
 

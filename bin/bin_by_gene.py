@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
 bin_by_gene.py
-Split a mapped counts file into one file per gene pair for parallel downstream
+Split an LFC table into one file per gene pair for parallel downstream
 processing. Output files are named bin_<gene1>~<gene2>.txt
 
-Input: mapped counts TSV (output of map_guides.py)
+Input: LFC TSV (output of calc_lfc.py) with columns including gene1 and gene2
 Output: one TSV per gene pair written to --outdir
 """
 
@@ -17,7 +17,7 @@ from collections import defaultdict
 
 def parse_args():
     p = argparse.ArgumentParser(description="Bin mapped counts by gene pair")
-    p.add_argument("--input",  required=True, help="Mapped counts TSV")
+    p.add_argument("--input",  required=True, help="LFC TSV")
     p.add_argument("--outdir", required=True, help="Directory for output bin files")
     return p.parse_args()
 

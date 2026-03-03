@@ -31,24 +31,24 @@ workflow {
         ch_annotations
     )
 
-    // ── Step 3: Bin mapped counts by gene pair (for parallel downstream) ──────
-    BIN_BY_GENE(MAP_GUIDES.out.mapped)
+    // ── Step 3: Count unique keys per guide pair / gene pair ──────────────────
+    COUNT_KEYS(MAP_GUIDES.out.mapped)
+
+    // ── Step 4: Calculate LFC and emit enriched table ─────────────────────────
+    //   Use mapped cell rows + normalised plasmid counts to compute per-key LFC
+    ch_norm_plasmid_file = ch_norm_plasmid.map { _l, f -> f }
+
+    CALC_LFC(
+        MAP_GUIDES.out.mapped,
+        ch_norm_plasmid_file
+    )
+
+    // ── Step 5: Bin LFC table by gene pair (for parallel downstream) ──────────
+    BIN_BY_GENE(CALC_LFC.out.lfc)
 
     // Each element of ch_bins is: tuple(gene_pair_label, binned_file)
     ch_bins = BIN_BY_GENE.out.bins.flatten().map { f ->
         def label = f.baseName.replaceAll(/^bin_/, '')
         tuple(label, f)
     }
-
-    // ── Step 4: Count unique keys per guide pair / gene pair ──────────────────
-    COUNT_KEYS(MAP_GUIDES.out.mapped)
-
-    // ── Step 5: Calculate LFC ─────────────────────────────────────────────────
-    //   Join normalised cell and plasmid on the "plasmid" label (single file each)
-    ch_lfc_input = ch_norm_cell.map    { _l, f -> f }
-                    .combine(ch_norm_plasmid.map { _l, f -> f })
-
-    CALC_LFC(
-        ch_lfc_input.map { cell, plasmid -> tuple(cell, plasmid) }
-    )
 }
