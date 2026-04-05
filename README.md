@@ -2,6 +2,8 @@
 
 A Nextflow pipeline for calculating log fold change (LFC) from dual-guide CRISPR screen counts data.
 
+PLEASE NOTE: This is a work in progress. This is NOT the final pipeline.
+
 ## Pipeline Overview
 
 ```
